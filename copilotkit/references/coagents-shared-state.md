@@ -1,10 +1,12 @@
 # CoAgents & Shared State
 
+**CopilotKit v1.51.3**
+
 ## Table of Contents
 - [One-Way State: useCopilotReadable](#one-way-state-usecopilotreadable)
-- [Bidirectional State: useCoAgent](#bidirectional-state-usecoagent)
+- [useAgent (v2 — Recommended)](#useagent-v2--recommended)
+- [Bidirectional State: useCoAgent (v1)](#bidirectional-state-usecoagent-v1)
 - [Agent State Rendering: useCoAgentStateRender](#agent-state-rendering-usecoagentstaterender)
-- [Programmatic Agent Control: useAgent](#programmatic-agent-control-useagent)
 - [LangGraph Integration](#langgraph-integration)
 - [State Flow Architecture](#state-flow-architecture)
 - [Multiple CoAgents](#multiple-coagents)
@@ -50,7 +52,67 @@ useCopilotReadable({
 
 **How it works:** Values are serialized and sent as `CopilotContextItem` objects in the runtime context. Agents receive them as structured context alongside conversation messages.
 
-## Bidirectional State: `useCoAgent`
+## useAgent (v2 — Recommended)
+
+`useAgent` is the v2 superset of `useCoAgent`. It provides full bidirectional state sync plus time travel, multi-agent execution, and agent mutual awareness. **Recommended for all new projects.**
+
+Import from `@copilotkit/react-core`:
+
+```typescript
+import { useAgent } from "@copilotkit/react-core";
+
+const { agent } = useAgent({ agentId: "my_agent" });
+
+// Shared state — read and write
+agent.state                          // read current state
+agent.setState({ key: "value" })     // write / merge state
+
+// Time travel — reset conversation to a previous point
+agent.setMessages(previousMessages)
+
+// Multi-agent — multiple useAgent calls in the same component/app
+const { agent: agentA } = useAgent({ agentId: "agent_a" });
+const { agent: agentB } = useAgent({ agentId: "agent_b" });
+// Agents are aware of each other when configured on the same runtime
+```
+
+### useAgent in a component
+
+```typescript
+import { useAgent } from "@copilotkit/react-core";
+
+function WeatherDashboard() {
+  const { agent } = useAgent({ agentId: "weather_agent" });
+
+  return (
+    <div>
+      <h1>Weather in {agent.state.city}</h1>
+      <p>Temperature: {agent.state.temperature}F</p>
+      <button onClick={() => agent.setState({ city: "London" })}>
+        Switch to London
+      </button>
+      {/* Time travel: rewind to earlier messages */}
+      <button onClick={() => agent.setMessages(previousMessages)}>
+        Undo last exchange
+      </button>
+    </div>
+  );
+}
+```
+
+### Key differences from useCoAgent
+
+| Feature | `useAgent` (v2) | `useCoAgent` (v1) |
+|---------|-----------------|-------------------|
+| Bidirectional state | Yes | Yes |
+| Time travel (`setMessages`) | Yes | No |
+| Multi-agent mutual awareness | Yes | Limited |
+| AG-UI protocol access | Full | Partial |
+| Identifier prop | `agentId` | `name` |
+
+## Bidirectional State: `useCoAgent` (v1)
+
+> **Note:** `useCoAgent` is still fully supported but `useAgent` (above) is recommended for new projects. `useCoAgent` may be deprecated in a future major release.
 
 Full two-way state sync between UI and agent. Both can read and write.
 
@@ -130,44 +192,6 @@ useCoAgentStateRender({
     />
   ),
 });
-```
-
-## Programmatic Agent Control: `useAgent`
-
-Direct AG-UI protocol access for full agent control:
-
-```typescript
-import { useAgent } from "@copilotkit/react-core";
-
-const { agent } = useAgent({ agentId: "my_agent" });
-
-// Read state
-console.log(agent.state);       // Current state object
-console.log(agent.messages);    // Conversation messages
-
-// Write state
-agent.setState({ city: "NYC", temperature: 72 });
-
-// Use in JSX
-function AgentUI() {
-  return (
-    <div>
-      <h1>Weather in {agent.state.city}</h1>
-      <p>Temperature: {agent.state.temperature}F</p>
-      <button onClick={() => agent.setState({ city: "London" })}>
-        Switch to London
-      </button>
-    </div>
-  );
-}
-
-// Time-travel: reset messages to a previous point
-agent.setMessages(previousMessages);
-
-// Multi-agent: multiple useAgent calls in the same session
-const { agent: agentA } = useAgent({ agentId: "agent_a" });
-const { agent: agentB } = useAgent({ agentId: "agent_b" });
-// Agents can be aware of each other's state when configured on the same runtime
 ```
 
 ## LangGraph Integration

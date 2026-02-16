@@ -4,7 +4,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg?style=flat-square)](LICENSE)
 [![CopilotKit](https://img.shields.io/badge/CopilotKit-28k%2B%20stars-orange?style=flat-square)](https://github.com/CopilotKit/CopilotKit)
 
-A comprehensive skill that teaches AI coding agents how to build agentic applications with [CopilotKit](https://copilotkit.ai) -- the open-source framework for embedding AI copilots directly into React and Next.js apps.
+A comprehensive skill that teaches AI coding agents how to build agentic applications with [CopilotKit](https://copilotkit.ai) (v1.51.3) -- the open-source framework for embedding AI copilots directly into React, Next.js, and Angular apps.
 
 ## Installation
 
@@ -19,14 +19,16 @@ Works with any agent that supports the [skills.sh](https://skills.sh) standard.
 This skill provides deep knowledge across the entire CopilotKit ecosystem:
 
 - **Quick Start & Setup** -- New project scaffolding, existing project integration, environment configuration
-- **Core Hooks** -- `useCopilotReadable`, `useCopilotAction`, `useCopilotChat`, `useCopilotAdditionalInstructions`, `useCopilotChatSuggestions`
+- **Core Hooks** -- `useCopilotReadable`, `useCopilotAction`, `useCopilotChat`, `useAgent` (v2), `useCoAgent`, `useCopilotAdditionalInstructions`, `useCopilotChatSuggestions`
 - **UI Components** -- `CopilotChat`, `CopilotSidebar`, `CopilotPopup`, `CopilotTextarea`
 - **Generative UI** -- Static AG-UI tool calls, declarative A2UI rendering, open-ended MCP Apps
 - **CoAgents & Shared State** -- `useCoAgent`, `useAgent`, bidirectional state sync with LangGraph
 - **Human-in-the-Loop** -- Buildtime/runtime HITL patterns, approval flows, agent steering, `useLangGraphInterrupt`
 - **Runtime & Adapters** -- `CopilotRuntime`, OpenAI/Anthropic/Google/Groq adapters, Next.js/Express/Hono endpoints
-- **Python SDK** -- `LangGraphAgent`, FastAPI integration, actions, state management, event streaming
+- **Python SDK** -- `LangGraphAgent`, `CrewAIAgent`, FastAPI/Flask integration, actions, state management, event streaming
 - **Styling & Customization** -- CSS variables, custom components, headless mode
+- **AG-UI Protocol** -- Event types, architecture, custom agents, framework compatibility
+- **Troubleshooting** -- Common issues, CORS fixes, deployment checklist, quick fixes table
 - **Agent Protocols** -- AG-UI, MCP, and A2A protocol integration
 
 ## File Structure
@@ -35,12 +37,14 @@ This skill provides deep knowledge across the entire CopilotKit ecosystem:
 copilotkit/
   SKILL.md                              # Main skill file (architecture, hooks, components, cheat sheet)
   references/
+    ag-ui-protocol.md                   # AG-UI protocol events, architecture, custom agents
+    coagents-shared-state.md            # CoAgents, useAgent v2, bidirectional state sync
     generative-ui.md                    # Generative UI patterns (AG-UI, A2UI, MCP Apps)
-    coagents-shared-state.md            # CoAgents and bidirectional state sync
     human-in-the-loop.md                # HITL workflows and approval patterns
+    python-sdk.md                       # Python SDK for LangGraph/CrewAI/AG-UI agents
     runtime-adapters.md                 # Runtime setup, LLM adapters, framework endpoints
-    python-sdk.md                       # Python SDK for LangGraph/CrewAI agents
     styling-customization.md            # CSS theming, custom components, headless mode
+    troubleshooting.md                  # Common issues, CORS, deployment checklist
 ```
 
 ## Compatible Agents

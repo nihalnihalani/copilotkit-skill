@@ -1,32 +1,46 @@
 ---
 name: copilotkit
-description: Build AI copilots and agentic applications using CopilotKit, the open-source framework for in-app AI agents. Use this skill when building React/Next.js/Angular apps with CopilotKit, implementing chat UIs, frontend/backend actions, shared state, human-in-the-loop workflows, generative UI, CoAgents with LangGraph, or connecting agents via AG-UI/MCP/A2A protocols. Triggers on CopilotKit, copilotkit, useCopilotAction, useCopilotReadable, useCoAgent, useAgent, CopilotRuntime, CopilotChat, CopilotSidebar, CopilotPopup, CopilotTextarea, AG-UI, agentic frontend, in-app AI copilot, useFrontendTool, useRenderToolCall, useDefaultTool, useCoAgentStateRender, useLangGraphInterrupt, useCopilotChat, useCopilotAdditionalInstructions, useCopilotChatSuggestions, useHumanInTheLoop, CopilotTask, copilot runtime, LangGraphAgent, BasicAgent, BuiltInAgent, CopilotKitRemoteEndpoint, A2UI, MCP Apps.
+description: Build AI copilots, chatbots, and agentic UIs in React and Next.js using CopilotKit. Use this skill when the user wants to add an AI assistant, copilot, chat interface, AI-powered textarea, or agentic UI to their app. Covers setup, hooks (useCopilotAction, useCopilotReadable, useCoAgent, useAgent), chat components (CopilotPopup, CopilotSidebar, CopilotChat), generative UI, human-in-the-loop, CoAgents with LangGraph, AG-UI protocol, MCP Apps, and Python SDK integration. Triggers on CopilotKit, copilotkit, useCopilotAction, useCopilotReadable, useCoAgent, useAgent, CopilotRuntime, CopilotChat, CopilotSidebar, CopilotPopup, CopilotTextarea, AG-UI, agentic frontend, in-app AI copilot, AI assistant React, chatbot React, useFrontendTool, useRenderToolCall, useDefaultTool, useCoAgentStateRender, useLangGraphInterrupt, useCopilotChat, useCopilotAdditionalInstructions, useCopilotChatSuggestions, useHumanInTheLoop, CopilotTask, copilot runtime, LangGraphAgent, BasicAgent, BuiltInAgent, CopilotKitRemoteEndpoint, A2UI, MCP Apps, AI textarea, AI form completion, add AI to React app.
+license: MIT
+metadata:
+  author: nihalnihalani
+  version: "1.1"
+  tags: copilotkit, ai, react, nextjs, copilot, chatbot, agent, agentic-ui, langgraph, coagents, ag-ui, mcp, angular
 ---
 
 # CopilotKit
 
-Full-stack open-source framework (MIT, v1.50) for building agentic applications with AI copilots embedded directly in React and Angular UIs. Angular support via `@copilotkitnext/angular` (Angular 18+19). 28k+ GitHub stars.
+Full-stack open-source framework (MIT, v1.51.3, Python SDK v0.1.78) for building agentic applications with AI copilots embedded directly in React and Angular UIs. Angular support via `@copilotkitnext/angular` (Angular 18+19). 28k+ GitHub stars.
+
+## When to Use This Skill
+- User wants to add an AI copilot, assistant, or chatbot to a React/Next.js app
+- User is working with CopilotKit hooks, components, or runtime
+- User asks about AI-powered text areas or form completion
+- User needs to connect a Python agent (LangGraph/CrewAI) to a React frontend
+- User is implementing human-in-the-loop or generative UI patterns
+- User asks about AG-UI protocol or MCP Apps
+- User wants to sync state between a UI and an AI agent
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Frontend Layer                                      │
-│  @copilotkit/react-core  - Provider, hooks           │
-│  @copilotkit/react-ui    - Chat components, styles   │
-└──────────────┬──────────────────────────────────────┘
-               │ AG-UI Protocol (HTTP event streaming)
-┌──────────────▼──────────────────────────────────────┐
-│  Backend Layer                                       │
-│  @copilotkit/runtime     - CopilotRuntime            │
-│  LLM Adapters: OpenAI, Anthropic, Google, Groq, etc  │
-└──────────────┬──────────────────────────────────────┘
-               │ HTTP (AG-UI events)
-┌──────────────▼──────────────────────────────────────┐
-│  Agent Layer (optional)                              │
-│  copilotkit (Python SDK) - LangGraph, CrewAI, etc    │
-│  Or: Google ADK, AWS Strands, Microsoft Agent FW     │
-└─────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+|  Frontend Layer                                          |
+|  @copilotkit/react-core  - Provider, hooks               |
+|  @copilotkit/react-ui    - Chat components, styles        |
++-------------------+-------------------------------------+
+                    | AG-UI Protocol (HTTP event streaming)
++-------------------v-------------------------------------+
+|  Backend Layer                                           |
+|  @copilotkit/runtime     - CopilotRuntime                |
+|  LLM Adapters: OpenAI, Anthropic, Google, Groq, etc      |
++-------------------+-------------------------------------+
+                    | HTTP (AG-UI events)
++-------------------v-------------------------------------+
+|  Agent Layer (optional)                                  |
+|  copilotkit (Python SDK) - LangGraph, CrewAI, etc        |
+|  Or: Google ADK, AWS Strands, Microsoft Agent FW, etc    |
++---------------------------------------------------------+
 ```
 
 ## Quick Start
@@ -107,7 +121,7 @@ export default function Home() {
 
 ## Core Hooks
 
-### `useCopilotReadable` — Expose app state to LLM
+### `useCopilotReadable` -- Expose app state to LLM
 ```typescript
 useCopilotReadable({
   description: "Current user profile and preferences",
@@ -115,7 +129,7 @@ useCopilotReadable({
 });
 ```
 
-### `useCopilotAction` — Define executable actions
+### `useCopilotAction` -- Define executable actions
 ```typescript
 useCopilotAction({
   name: "addItem",
@@ -131,26 +145,32 @@ useCopilotAction({
 });
 ```
 
-### `useCopilotChat` — Programmatic chat control
+### `useCopilotChat` -- Programmatic chat control
 ```typescript
 const { appendMessage, stopGeneration, reset, reloadMessages } = useCopilotChat();
 ```
 
-### `useCopilotAdditionalInstructions` — Dynamic context-aware prompts
+### `useCopilotAdditionalInstructions` -- Dynamic context-aware prompts
 ```typescript
 useCopilotAdditionalInstructions({
   instructions: "User is on the settings page. Help them configure preferences.",
 });
 ```
 
-### `useCopilotChatSuggestions` — Auto-generate suggestions from app state
+### `useCopilotChatSuggestions` -- Auto-generate suggestions from app state
 ```typescript
 useCopilotChatSuggestions({
   instructions: "Suggest actions based on the current app state.",
 });
 ```
 
-### `CopilotTask` — Run one-off programmatic tasks
+### `useAgent` -- v2 agent state sync (superset of useCoAgent)
+```typescript
+const { state, setState, run, stop } = useAgent({ name: "my_agent" });
+```
+`useAgent` is the v2 replacement for `useCoAgent`. It includes all `useCoAgent` functionality plus time-travel debugging and improved state management. Prefer `useAgent` for new projects.
+
+### `CopilotTask` -- Run one-off programmatic tasks
 ```typescript
 import { CopilotTask } from "@copilotkit/react-core";
 
@@ -160,7 +180,7 @@ await task.run(context);
 
 ## Advanced Patterns
 
-Detailed guides organized by topic — load only what's needed:
+Detailed guides organized by topic -- load only what's needed:
 
 - **Generative UI** (static AG-UI, declarative A2UI, open-ended MCP Apps): See [references/generative-ui.md](references/generative-ui.md)
 - **Shared State & CoAgents** (useCoAgent, useAgent, bidirectional sync, LangGraph): See [references/coagents-shared-state.md](references/coagents-shared-state.md)
@@ -168,6 +188,8 @@ Detailed guides organized by topic — load only what's needed:
 - **Runtime & Adapters** (all LLM adapters, framework endpoints, backend actions): See [references/runtime-adapters.md](references/runtime-adapters.md)
 - **Python SDK** (LangGraphAgent, FastAPI, actions, state, events): See [references/python-sdk.md](references/python-sdk.md)
 - **Styling & Customization** (CSS, custom components, headless mode): See [references/styling-customization.md](references/styling-customization.md)
+- **Troubleshooting** (common issues, CORS, env vars, Docker): See [references/troubleshooting.md](references/troubleshooting.md)
+- **AG-UI Protocol** (events, architecture, CLI scaffolding): See [references/ag-ui-protocol.md](references/ag-ui-protocol.md)
 
 ## UI Components
 
@@ -199,13 +221,13 @@ All accept `instructions`, `labels`, `suggestions`, custom message/input compone
 
 | Protocol | Purpose | Package |
 |----------|---------|---------|
-| **AG-UI** | Agent ↔ User interaction, event streaming | `@ag-ui/core`, `@ag-ui/client` |
-| **MCP** | Agent ↔ External tools | MCP server integration |
-| **A2A** | Agent ↔ Agent communication | A2A protocol support |
+| **AG-UI** | Agent <-> User interaction, event streaming | `@ag-ui/core`, `@ag-ui/client` |
+| **MCP** | Agent <-> External tools | MCP server integration |
+| **A2A** | Agent <-> Agent communication | A2A protocol support |
 
 ## Supported Agent Frameworks
 
-LangGraph, Google ADK, Microsoft Agent Framework, AWS Strands, CrewAI, Mastra, PydanticAI, AG2, VoltAgent, Blaxel.
+LangGraph, CrewAI, Google ADK, AWS Strands, Microsoft Agent Framework, Mastra, PydanticAI, AG2, LlamaIndex, Agno, VoltAgent, Blaxel.
 
 ## LLM Adapters
 
@@ -257,7 +279,20 @@ render: ({ status, args, result }) => {
 
 ## Versioning
 
-Current version: **v1.50**. The v2 runtime interface is available at the `/v2` path. Next-generation packages use the `@copilotkitnext/*` namespace (e.g., `@copilotkitnext/angular`).
+Current version: **v1.51.3** (Python SDK **v0.1.78**). The v2 runtime interface is available at the `/v2` path. Next-generation packages use the `@copilotkitnext/*` namespace (e.g., `@copilotkitnext/angular`).
+
+## Common Anti-Patterns
+
+| Don't | Do Instead |
+|-------|-----------|
+| Put API keys in client-side code | Use server-side env vars + runtime endpoint |
+| Create a new CopilotRuntime per request | Instantiate once, reuse across requests |
+| Skip `status` checks in render functions | Always handle "inProgress", "complete", "failed" |
+| Use `useCoAgent` for new projects | Prefer `useAgent` (v2 superset with time travel) |
+| Hardcode instructions in every component | Use `useCopilotAdditionalInstructions` for page-specific context |
+| Forget to import styles | Add `import "@copilotkit/react-ui/styles.css"` in layout |
+| Mix `runtimeUrl` and `publicApiKey` without reason | Pick one deployment mode unless you need hybrid |
+| Put heavy computation in action handlers | Return data from handlers, compute in render |
 
 ## Common Patterns Cheat Sheet
 
@@ -269,9 +304,12 @@ Current version: **v1.50**. The v2 runtime interface is available at the `/v2` p
 | Render UI from tool calls | `useFrontendTool()` or `useRenderToolCall()` |
 | Default fallback tool renderer | `useDefaultTool()` |
 | Sync state bidirectionally | `useCoAgent()` |
+| Use v2 agent state sync | `useAgent()` (superset of useCoAgent) |
 | Show agent progress | `useCoAgentStateRender()` |
 | Ask user for approval | `useHumanInTheLoop()` |
 | Handle LangGraph interrupts | `useLangGraphInterrupt()` |
 | Control chat programmatically | `useCopilotChat()` |
 | Run one-off tasks | `CopilotTask` |
 | Connect Python agent | `CopilotKitRemoteEndpoint` + `LangGraphAgent` |
+| Scaffold AG-UI app | `npx create-ag-ui-app` |
+| Persist conversations | Thread model + StorageRunners |

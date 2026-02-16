@@ -1,14 +1,14 @@
 # Python SDK
 
-The `copilotkit` Python package enables building backend agents (LangGraph, CrewAI) that connect to the CopilotKit frontend.
+The `copilotkit` Python package (v0.1.78) enables building backend agents (LangGraph, CrewAI, and many more via AG-UI) that connect to the CopilotKit frontend.
 
 ## Installation
 
 ```bash
-pip install copilotkit
+pip install copilotkit==0.1.78
 ```
 
-**Dependencies:** langgraph>=0.3.25,<1.1.0, langchain>=0.3.0, fastapi>=0.115.0, ag-ui-langgraph>=0.0.22, ag-ui-core>=0.0.1
+**Dependencies:** `langgraph>=0.3.25,<1.1.0`, `langchain>=0.3.0`, `fastapi>=0.115.0`, `ag-ui-langgraph>=0.0.22`, `ag-ui-core>=0.0.1`
 
 ## Core Classes
 
@@ -249,24 +249,59 @@ Data exposed from frontend via `useCopilotReadable()`:
 # Each item has: description (str), value (Any)
 ```
 
-### Intermediate State Streaming
+### `copilotkit_customize_config` — Configure Event Emission
 
-Configure state snapshots during execution:
+Utility for fine-grained control over which AG-UI events get emitted during agent execution. Call it inside a LangGraph node to customize emission behavior for that node's scope.
 
 ```python
 from copilotkit import copilotkit_customize_config
 
-config = copilotkit_customize_config(
-    emit_messages=True,                    # Emit message events
-    emit_tool_calls=True,                  # Emit all tool calls (or list specific names)
-    emit_intermediate_state=[              # Emit state during specific nodes
-        {
-            "state_key": "results",
-            "tool": "search",
-            "tool_argument": "query",
-        }
-    ],
-)
+async def my_node(state, config):
+    # Customize which events this node emits
+    config = copilotkit_customize_config(
+        config,
+        emit_messages=True,                    # Emit text message events
+        emit_tool_calls=True,                  # Emit all tool call events (bool or list of tool names)
+        emit_intermediate_state=[              # Emit state snapshots during specific nodes
+            {
+                "state_key": "results",
+                "tool": "search",
+                "tool_argument": "query",
+            }
+        ],
+    )
+    # ... node logic using the customized config
+    return state
+```
+
+**Parameters:**
+- `config` — The LangGraph `RunnableConfig` passed to the node
+- `emit_messages` (bool) — Whether to emit `TEXT_MESSAGE_*` events. Default: `True`
+- `emit_tool_calls` (bool | list[str]) — `True` to emit all tool calls, or a list of specific tool names to emit. Default: `True`
+- `emit_intermediate_state` (list[dict]) — List of state key mappings to emit as `STATE_SNAPSHOT` events. Each dict has `state_key`, `tool`, and `tool_argument`
+
+### Intermediate State Streaming
+
+Configure state snapshots during execution using `copilotkit_customize_config`:
+
+```python
+from copilotkit import copilotkit_customize_config
+
+async def search_node(state, config):
+    config = copilotkit_customize_config(
+        config,
+        emit_messages=True,
+        emit_tool_calls=True,
+        emit_intermediate_state=[
+            {
+                "state_key": "results",
+                "tool": "search",
+                "tool_argument": "query",
+            }
+        ],
+    )
+    # ... perform search
+    return {"results": results}
 ```
 
 ## Message Types
@@ -343,3 +378,31 @@ endpoint = CopilotKitRemoteEndpoint(agents=[agent])
 app = FastAPI()
 add_fastapi_endpoint(app, endpoint, "/copilotkit")
 ```
+
+## Supported Agent Frameworks
+
+CopilotKit supports a wide range of agent frameworks. Some have deep native integration, while others connect through the AG-UI (Agent-User Interface) protocol compatibility layer.
+
+### Native Integration (Deep)
+
+| Framework | Wrapper Class | Notes |
+|-----------|--------------|-------|
+| **LangGraph** | `LangGraphAgent` / `LangGraphAGUIAgent` | First-class integration with full state management, checkpointing, and custom event emission |
+| **CrewAI** | `CrewAIAgent` | Dedicated wrapper for CrewAI multi-agent crews |
+
+### AG-UI Protocol Compatible
+
+These frameworks connect to CopilotKit through the AG-UI protocol, enabling bidirectional state sync and event streaming:
+
+| Framework | Integration Method |
+|-----------|-------------------|
+| **Google ADK** (Agent Development Kit) | AG-UI compatibility |
+| **AWS Strands** | AG-UI compatibility |
+| **Microsoft Agent Framework** | AG-UI compatibility |
+| **Mastra** | AG-UI compatibility |
+| **AG2** | AG-UI compatibility |
+| **LlamaIndex** | AG-UI compatibility |
+| **PydanticAI** | AG-UI compatibility |
+| **Agno** | AG-UI compatibility |
+
+Any agent framework that implements the AG-UI protocol can integrate with CopilotKit. The AG-UI protocol provides a standardized event streaming interface (`TEXT_MESSAGE_*`, `TOOL_CALL_*`, `STATE_SNAPSHOT`, etc.) that enables real-time frontend-backend communication regardless of the underlying agent framework.
