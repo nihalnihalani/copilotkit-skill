@@ -78,6 +78,27 @@ All render functions receive a `status` parameter:
 | `"complete"` | Tool finished successfully | Render final result |
 | `"failed"` | Tool errored | Error message, retry button |
 
+### Using `useDefaultTool` (fallback renderer)
+
+Provide a default/fallback UI renderer for any tool calls that don't have a specific custom renderer registered via `useFrontendTool` or `useRenderToolCall`:
+
+```typescript
+import { useDefaultTool } from "@copilotkit/react-core";
+
+useDefaultTool({
+  render: ({ name, args, status, result }) => (
+    <div className="default-tool-card">
+      <h4>Tool: {name}</h4>
+      {status === "inProgress" && <Spinner />}
+      {status === "complete" && <pre>{JSON.stringify(result, null, 2)}</pre>}
+      {status === "failed" && <ErrorMessage />}
+    </div>
+  ),
+});
+```
+
+This is useful when working with many backend tools or agent-emitted tool calls where defining individual renderers for each is impractical. Tools with specific renderers take precedence over the default.
+
 ### Multiple Tools Example
 
 ```typescript
@@ -220,4 +241,4 @@ The underlying event system powering all generative UI:
 | `STATE_SNAPSHOT` | Full agent state update |
 | `CUSTOM` | Application-specific events (name/value) |
 
-These events flow: Agent → CopilotRuntime → GraphQL subscription → React hooks → UI re-render.
+These events flow: Agent → CopilotRuntime → AG-UI event stream over HTTP → React hooks → UI re-render.

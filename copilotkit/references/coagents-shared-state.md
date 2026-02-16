@@ -160,6 +160,14 @@ function AgentUI() {
     </div>
   );
 }
+
+// Time-travel: reset messages to a previous point
+agent.setMessages(previousMessages);
+
+// Multi-agent: multiple useAgent calls in the same session
+const { agent: agentA } = useAgent({ agentId: "agent_a" });
+const { agent: agentB } = useAgent({ agentId: "agent_b" });
+// Agents can be aware of each other's state when configured on the same runtime
 ```
 
 ## LangGraph Integration
@@ -231,7 +239,7 @@ Frontend                          Backend
 useCopilotReadable(value)
         │
         ▼
-  GraphQL request ─────────────→ CopilotRuntime
+  HTTP request ────────────────→ CopilotRuntime
   (context + messages)             │
                                    ▼
                               Agent (LangGraph)
@@ -242,7 +250,7 @@ useCopilotReadable(value)
                               AG-UI Events
                               STATE_SNAPSHOT
                                    │
-  GraphQL subscription ◄────────────┘
+  AG-UI event stream ◄─────────────┘
         │
         ▼
   useCoAgent.state updated
@@ -250,7 +258,7 @@ useCopilotReadable(value)
   UI re-renders
 ```
 
-Both directions stream in real-time via GraphQL subscriptions.
+Both directions stream in real-time via AG-UI event streaming over HTTP.
 
 ## Multiple CoAgents
 

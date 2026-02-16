@@ -8,7 +8,7 @@ The `copilotkit` Python package enables building backend agents (LangGraph, Crew
 pip install copilotkit
 ```
 
-**Dependencies:** langgraph>=0.0.39, langchain-core>=0.1.0, ag-ui-langgraph>=0.0.1, ag-ui-core>=0.0.1
+**Dependencies:** langgraph>=0.3.25,<1.1.0, langchain>=0.3.0, fastapi>=0.115.0, ag-ui-langgraph>=0.0.22, ag-ui-core>=0.0.1
 
 ## Core Classes
 
@@ -83,6 +83,88 @@ action = Action(
 )
 ```
 
+### CrewAIAgent
+
+Dedicated wrapper for CrewAI-based agents:
+
+```python
+from copilotkit import CopilotKitRemoteEndpoint, CrewAIAgent
+
+agent = CrewAIAgent(
+    name="crew_agent",
+    crew=my_crew,  # A CrewAI Crew instance
+)
+
+endpoint = CopilotKitRemoteEndpoint(agents=[agent])
+```
+
+Use `CrewAIAgent` when integrating CrewAI multi-agent crews with CopilotKit.
+
+## Utility Functions
+
+Helper functions for emitting events and controlling agent execution from within LangGraph nodes:
+
+### `copilotkit_emit_state` — Emit intermediate state
+
+```python
+from copilotkit import copilotkit_emit_state
+
+async def search_node(state, config):
+    results = await perform_search(state["query"])
+    # Emit partial state so frontend can show progress
+    await copilotkit_emit_state(config, {"results": results, "status": "searching"})
+    return {"results": results}
+```
+
+### `copilotkit_emit_message` — Emit messages during execution
+
+```python
+from copilotkit import copilotkit_emit_message
+
+async def analyze_node(state, config):
+    await copilotkit_emit_message(config, "Starting analysis of search results...")
+    analysis = await run_analysis(state["results"])
+    await copilotkit_emit_message(config, f"Analyzed {len(state['results'])} results.")
+    return {"analysis": analysis}
+```
+
+### `copilotkit_emit_tool_call` — Manually emit tool calls
+
+```python
+from copilotkit import copilotkit_emit_tool_call
+
+async def process_node(state, config):
+    # Manually emit a tool call event for frontend rendering
+    await copilotkit_emit_tool_call(config, name="show_chart", args={"data": state["data"]})
+    return state
+```
+
+### `copilotkit_interrupt` — Trigger HITL from Python
+
+```python
+from copilotkit import copilotkit_interrupt
+
+async def review_node(state, config):
+    # Pause execution and ask user for approval
+    response = await copilotkit_interrupt(
+        config,
+        message="Please review the draft before publishing.",
+    )
+    if response.get("approved"):
+        return {"status": "approved"}
+    return {"status": "rejected"}
+```
+
+### `copilotkit_exit` — Signal agent completion
+
+```python
+from copilotkit import copilotkit_exit
+
+async def final_node(state, config):
+    await copilotkit_exit(config)
+    return state
+```
+
 ## FastAPI Integration
 
 ```python
@@ -105,6 +187,22 @@ add_fastapi_endpoint(app, endpoint, "/copilotkit")
 - Body contains: messages, state, threadId, properties
 - Returns JSON with execution results, updated state, events
 - Supports streaming for long-running operations
+
+## Flask Integration
+
+```python
+from copilotkit import CopilotKitRemoteEndpoint, LangGraphAgent
+from copilotkit.integrations.flask import add_flask_endpoint
+from flask import Flask
+
+agent = LangGraphAgent(name="my_agent", graph=compiled_graph)
+endpoint = CopilotKitRemoteEndpoint(agents=[agent])
+
+app = Flask(__name__)
+add_flask_endpoint(app, endpoint, "/copilotkit")
+
+# Run: flask run --port 8000
+```
 
 ## Connect Python Agent to JS Runtime
 
@@ -196,7 +294,7 @@ Events emitted during agent execution:
 ## Complete Integration Flow
 
 ```
-1. Frontend sends request via GraphQL → Node.js CopilotRuntime
+1. Frontend sends HTTP request → Node.js CopilotRuntime
 2. Runtime routes to Python FastAPI endpoint (HTTP POST)
 3. FastAPI invokes CopilotKitRemoteEndpoint
 4. Endpoint selects appropriate LangGraphAgent
@@ -205,7 +303,7 @@ Events emitted during agent execution:
 7. CompiledStateGraph executes workflow nodes
 8. Events emitted in AG-UI protocol format
 9. Messages converted back to CopilotKit format
-10. Results streamed back through runtime → GraphQL → Frontend
+10. Results streamed back through runtime → AG-UI event stream → Frontend
 ```
 
 ## Full Example: Research Agent

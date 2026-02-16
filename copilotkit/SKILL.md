@@ -1,11 +1,11 @@
 ---
 name: copilotkit
-description: Build AI copilots and agentic applications using CopilotKit, the open-source framework for in-app AI agents. Use this skill when building React/Next.js apps with CopilotKit, implementing chat UIs, frontend/backend actions, shared state, human-in-the-loop workflows, generative UI, CoAgents with LangGraph, or connecting agents via AG-UI/MCP/A2A protocols. Triggers on CopilotKit, copilotkit, useCopilotAction, useCopilotReadable, useCoAgent, useAgent, CopilotRuntime, CopilotChat, CopilotSidebar, CopilotPopup, CopilotTextarea, AG-UI, agentic frontend, in-app AI copilot, useFrontendTool, useRenderToolCall, useCoAgentStateRender, useLangGraphInterrupt, useCopilotChat, useCopilotAdditionalInstructions, useCopilotChatSuggestions, useHumanInTheLoop, CopilotTask, copilot runtime, LangGraphAgent, CopilotKitRemoteEndpoint, A2UI, MCP Apps.
+description: Build AI copilots and agentic applications using CopilotKit, the open-source framework for in-app AI agents. Use this skill when building React/Next.js/Angular apps with CopilotKit, implementing chat UIs, frontend/backend actions, shared state, human-in-the-loop workflows, generative UI, CoAgents with LangGraph, or connecting agents via AG-UI/MCP/A2A protocols. Triggers on CopilotKit, copilotkit, useCopilotAction, useCopilotReadable, useCoAgent, useAgent, CopilotRuntime, CopilotChat, CopilotSidebar, CopilotPopup, CopilotTextarea, AG-UI, agentic frontend, in-app AI copilot, useFrontendTool, useRenderToolCall, useDefaultTool, useCoAgentStateRender, useLangGraphInterrupt, useCopilotChat, useCopilotAdditionalInstructions, useCopilotChatSuggestions, useHumanInTheLoop, CopilotTask, copilot runtime, LangGraphAgent, BasicAgent, BuiltInAgent, CopilotKitRemoteEndpoint, A2UI, MCP Apps.
 ---
 
 # CopilotKit
 
-Full-stack open-source framework (MIT) for building agentic applications with AI copilots embedded directly in React/Angular UIs. 28k+ GitHub stars.
+Full-stack open-source framework (MIT, v1.50) for building agentic applications with AI copilots embedded directly in React and Angular UIs. Angular support via `@copilotkitnext/angular` (Angular 18+19). 28k+ GitHub stars.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Full-stack open-source framework (MIT) for building agentic applications with AI
 │  @copilotkit/react-core  - Provider, hooks           │
 │  @copilotkit/react-ui    - Chat components, styles   │
 └──────────────┬──────────────────────────────────────┘
-               │ GraphQL + AG-UI Protocol (streaming)
+               │ AG-UI Protocol (HTTP event streaming)
 ┌──────────────▼──────────────────────────────────────┐
 │  Backend Layer                                       │
 │  @copilotkit/runtime     - CopilotRuntime            │
@@ -150,6 +150,14 @@ useCopilotChatSuggestions({
 });
 ```
 
+### `CopilotTask` — Run one-off programmatic tasks
+```typescript
+import { CopilotTask } from "@copilotkit/react-core";
+
+const task = new CopilotTask({ instructions: "Summarize the data" });
+await task.run(context);
+```
+
 ## Advanced Patterns
 
 Detailed guides organized by topic — load only what's needed:
@@ -211,8 +219,45 @@ LangGraph, Google ADK, Microsoft Agent Framework, AWS Strands, CrewAI, Mastra, P
 | `@copilotkit/react-ui` | Chat UI components + styles |
 | `@copilotkit/runtime` | Backend runtime + LLM adapters + framework endpoints |
 | `copilotkit` (Python) | Python SDK for LangGraph/CrewAI agents |
+| `@copilotkitnext/angular` | Angular SDK (Angular 18+19) |
 | `@ag-ui/core` | AG-UI protocol types/events |
 | `@ag-ui/client` | AG-UI client implementation |
+
+## Error Handling
+
+### Frontend `onError` callback
+
+```typescript
+<CopilotKit
+  runtimeUrl="/api/copilotkit"
+  onError={(error) => {
+    console.error("CopilotKit error:", error);
+    toast.error("AI assistant encountered an error");
+  }}
+>
+```
+
+### Tool render `"failed"` status
+
+All render functions receive `status === "failed"` when a tool errors. Always handle this:
+
+```typescript
+render: ({ status, args, result }) => {
+  if (status === "failed") return <ErrorCard message="Tool execution failed" />;
+  // ...
+}
+```
+
+### Python SDK exception types
+
+| Exception | Meaning |
+|-----------|---------|
+| `ActionNotFoundException` | Requested action not registered |
+| `AgentNotFoundException` | Requested agent not found in endpoint |
+
+## Versioning
+
+Current version: **v1.50**. The v2 runtime interface is available at the `/v2` path. Next-generation packages use the `@copilotkitnext/*` namespace (e.g., `@copilotkitnext/angular`).
 
 ## Common Patterns Cheat Sheet
 
@@ -222,6 +267,7 @@ LangGraph, Google ADK, Microsoft Agent Framework, AWS Strands, CrewAI, Mastra, P
 | Give LLM app context | `useCopilotReadable()` |
 | Let LLM call functions | `useCopilotAction()` |
 | Render UI from tool calls | `useFrontendTool()` or `useRenderToolCall()` |
+| Default fallback tool renderer | `useDefaultTool()` |
 | Sync state bidirectionally | `useCoAgent()` |
 | Show agent progress | `useCoAgentStateRender()` |
 | Ask user for approval | `useHumanInTheLoop()` |

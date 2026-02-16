@@ -13,11 +13,11 @@
 Backend orchestrator managing LLM requests, tool execution, agent routing, and event streaming.
 
 **Responsibilities:**
-1. Request orchestration — processes GraphQL requests from frontend
+1. Request orchestration — processes HTTP requests from frontend
 2. LLM adapter management — interfaces with provider adapters
 3. Agent execution — manages agent lifecycle and state sync
 4. Action discovery — exposes frontend `useCopilotAction` definitions as tools
-5. Event streaming — streams events via GraphQL subscriptions
+5. Event streaming — streams AG-UI events over HTTP
 6. Context management — aggregates `useCopilotReadable` context
 
 ## Framework Endpoints
@@ -258,17 +258,125 @@ const runtime = new CopilotRuntime({
 />
 ```
 
+## Built-in Agents
+
+### BuiltInAgent
+
+Pre-configured agent that runs directly in the CopilotRuntime with middleware support (e.g., MCP Apps):
+
+```typescript
+import { BuiltInAgent, MCPAppsMiddleware } from "@copilotkit/runtime";
+
+const agent = new BuiltInAgent({
+  model: "openai/gpt-4o",
+}).use(
+  new MCPAppsMiddleware({
+    mcpServers: [{ type: "http", url: "http://localhost:3108/mcp", serverId: "my-server" }],
+  })
+);
+
+const runtime = new CopilotRuntime({ agents: [agent] });
+```
+
+### BasicAgent
+
+Simplified agent for direct-to-LLM scenarios without middleware. Lighter-weight alternative to BuiltInAgent for straightforward use cases:
+
+```typescript
+import { BasicAgent } from "@copilotkit/runtime";
+
+const agent = new BasicAgent({
+  name: "simple_assistant",
+  model: "openai/gpt-4o",
+  instructions: "You are a helpful coding assistant.",
+});
+
+const runtime = new CopilotRuntime({ agents: [agent] });
+```
+
+Use `BasicAgent` when you need a simple agent without middleware pipelines. Use `BuiltInAgent` when you need `.use()` middleware like `MCPAppsMiddleware`.
+
+## Thread Model & Persistence
+
+CopilotKit conversations are organized into threads, each identified by a unique thread ID.
+
+### Thread IDs
+
+Each conversation session gets a thread ID automatically. Thread IDs enable conversation continuity, state persistence, and reconnection after disconnects.
+
+### Storage Runners (Development)
+
+For development and testing, CopilotKit provides built-in storage runners:
+
+```typescript
+import { CopilotRuntime, InMemoryStorageRunner } from "@copilotkit/runtime";
+
+// In-memory (resets on restart — dev only)
+const runtime = new CopilotRuntime({
+  storageRunner: new InMemoryStorageRunner(),
+});
+```
+
+```typescript
+import { CopilotRuntime, SQLiteStorageRunner } from "@copilotkit/runtime";
+
+// SQLite (persists to file — dev/testing)
+const runtime = new CopilotRuntime({
+  storageRunner: new SQLiteStorageRunner({ dbPath: "./copilotkit.db" }),
+});
+```
+
+### Thread Restoration & Reconnection
+
+Threads support restoration after page reloads or disconnects. The frontend automatically reconnects to the existing thread using the stored thread ID.
+
+### Copilot Cloud Persistence (Production)
+
+For production deployments, use Copilot Cloud which provides managed persistence, thread storage, and automatic scaling:
+
+```typescript
+<CopilotKit publicApiKey="ck_..." />
+```
+
+## Authenticated Actions
+
+Pass authentication context from the frontend to backend actions:
+
+```typescript
+// Frontend: pass auth via properties
+<CopilotKit
+  runtimeUrl="/api/copilotkit"
+  properties={{ authorization: { token: userToken, userId: user.id } }}
+/>
+
+// Backend: access auth in action handlers
+const runtime = new CopilotRuntime({
+  actions: [
+    {
+      name: "getUserData",
+      description: "Fetch authenticated user data",
+      parameters: [{ name: "dataType", type: "string", required: true }],
+      handler: async ({ dataType }, { properties }) => {
+        const { token, userId } = properties.authorization;
+        // Validate token and fetch data for userId
+        return await fetchUserData(userId, dataType, token);
+      },
+    },
+  ],
+});
+```
+
 ## Processing Flow
 
 ```
-1. Framework endpoint receives GraphQL request from frontend
+1. Framework endpoint receives HTTP request from frontend
 2. Runtime aggregates context from all useCopilotReadable() calls
 3. Frontend actions from useCopilotAction() converted to tool definitions
 4. If agent name specified → route to agent (CustomHttpAgent)
    Otherwise → direct LLM call via service adapter
 5. LLM processes messages + context + tools
 6. Tool calls executed (frontend or backend), results returned
-7. All events streamed to frontend via GraphQL subscriptions:
+7. All events streamed to frontend via AG-UI event streaming over HTTP:
    - TEXT_MESSAGE_START/CONTENT/END
    - TOOL_CALL_START/ARGS/END
    - STATE_SNAPSHOT
