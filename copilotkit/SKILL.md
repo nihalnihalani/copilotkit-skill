@@ -24,23 +24,77 @@ Full-stack open-source framework (MIT, v1.51.3, Python SDK v0.1.78) for building
 ## Architecture
 
 ```
-+---------------------------------------------------------+
-|  Frontend Layer                                          |
-|  @copilotkit/react-core  - Provider, hooks               |
-|  @copilotkit/react-ui    - Chat components, styles        |
-+-------------------+-------------------------------------+
-                    | AG-UI Protocol (HTTP event streaming)
-+-------------------v-------------------------------------+
-|  Backend Layer                                           |
-|  @copilotkit/runtime     - CopilotRuntime                |
-|  LLM Adapters: OpenAI, Anthropic, Google, Groq, etc      |
-+-------------------+-------------------------------------+
-                    | HTTP (AG-UI events)
-+-------------------v-------------------------------------+
-|  Agent Layer (optional)                                  |
-|  copilotkit (Python SDK) - LangGraph, CrewAI, etc        |
-|  Or: Google ADK, AWS Strands, Microsoft Agent FW, etc    |
-+---------------------------------------------------------+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   F R O N T E N D    @copilotkit/react-core + react-ui          │
+│                                                                 │
+│   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
+│   │  <CopilotPopup>  │  │ <CopilotSidebar> │  │ <CopilotChat>│ │
+│   │  <CopilotTextarea>│  │   Headless UI    │  │  Custom UI   │ │
+│   └────────┬─────────┘  └────────┬─────────┘  └──────┬───────┘ │
+│            └──────────────┬──────┘                    │         │
+│                           ▼                           │         │
+│   ┌───────────────────────────────────────────────────┘         │
+│   │  React Hooks                                                │
+│   │  ├─ useCopilotAction()       → Define callable tools        │
+│   │  ├─ useCopilotReadable()     → Expose app state to LLM     │
+│   │  ├─ useAgent()               → Bidirectional state (v2)    │
+│   │  ├─ useFrontendTool()        → Generative UI rendering     │
+│   │  ├─ useCopilotChat()         → Headless chat control       │
+│   │  └─ useLangGraphInterrupt()  → Human-in-the-loop           │
+│   └─────────────────────────┬───────────────────────────────────│
+│                             │                                   │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │    AG-UI Protocol  │
+                    │  (HTTP event stream│
+                    │   17 event types)  │
+                    └─────────┬─────────┘
+                              │
+┌─────────────────────────────┼───────────────────────────────────┐
+│                             │                                   │
+│   B A C K E N D    @copilotkit/runtime                          │
+│                             ▼                                   │
+│   ┌─────────────────────────────────────────────────────────┐   │
+│   │  CopilotRuntime                                         │   │
+│   │  ┌──────────────┐ ┌───────────────┐ ┌────────────────┐ │   │
+│   │  │ LLM Adapters │ │ Backend       │ │ Thread         │ │   │
+│   │  │ OpenAI       │ │ Actions       │ │ Persistence    │ │   │
+│   │  │ Anthropic    │ │ (server-side  │ │ InMemory /     │ │   │
+│   │  │ Google       │ │  tools)       │ │ SQLite         │ │   │
+│   │  │ Groq         │ │               │ │                │ │   │
+│   │  └──────────────┘ └───────────────┘ └────────────────┘ │   │
+│   │  ┌──────────────────────────────────────────────────┐   │   │
+│   │  │ Agent Router                                     │   │   │
+│   │  │ ├─ BuiltInAgent   (direct LLM + middleware)      │   │   │
+│   │  │ ├─ BasicAgent     (lightweight, no middleware)    │   │   │
+│   │  │ └─ CustomHttpAgent (remote Python/JS agents) ────┼───┼─┐ │
+│   │  └──────────────────────────────────────────────────┘   │ │ │
+│   └─────────────────────────────────────────────────────────┘ │ │
+│                                                               │ │
+└───────────────────────────────────────────────────────────────┼─┘
+                                                                │
+                    ┌───────────────────┐                       │
+                    │    AG-UI / HTTP    │◄──────────────────────┘
+                    └─────────┬─────────┘
+                              │
+┌─────────────────────────────┼───────────────────────────────────┐
+│                             ▼                                   │
+│   A G E N T   L A Y E R   (optional, any AG-UI framework)      │
+│                                                                 │
+│   Python: copilotkit SDK v0.1.78 + FastAPI / Flask              │
+│                                                                 │
+│   ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐  │
+│   │ LangGraph  │ │  CrewAI    │ │ Google ADK │ │ AWS Strands│  │
+│   └────────────┘ └────────────┘ └────────────┘ └────────────┘  │
+│   ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐  │
+│   │  Mastra    │ │ PydanticAI │ │    AG2     │ │ LlamaIndex │  │
+│   └────────────┘ └────────────┘ └────────────┘ └────────────┘  │
+│                                                                 │
+│   Protocols:  AG-UI (↔ user)  ·  MCP (↔ tools)  ·  A2A (↔ agents)│
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Quick Start
